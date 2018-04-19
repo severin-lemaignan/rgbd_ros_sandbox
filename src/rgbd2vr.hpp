@@ -114,8 +114,8 @@ class RGBD2VR
     private: // OpenCV stuff
         float baseline_scale;
         cv::Mat frame;
-        std::tuple<cv::Mat, cv::Mat> fakeStereo(cv::Mat rgb, cv::Mat disparity);
-        cv::Mat resizeKeepAspectRatio(const cv::Mat &input, const cv::Size &dstSize, const cv::Scalar &bgcolor = {0,0,0});
+        void fakeStereo(cv::InputArray rgb, cv::InputArray disparity, cv::OutputArray eye, vr::Hmd_Eye);
+        cv::Mat resizeKeepAspectRatio(const cv::Mat &input, const cv::Size &dstSize);
 
     private: // OpenGL bookkeeping
         int m_iTrackedControllerCount;

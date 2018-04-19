@@ -511,12 +511,14 @@ void RGBD2VR::ProcessVREvent( const vr::VREvent_t & event )
     }
 }
 
-tuple<Mat, Mat> RGBD2VR::fakeStereo(Mat rgb, Mat disparity) {
+void RGBD2VR::fakeStereo(InputArray _rgb, InputArray _disparity, OutputArray _out, vr::Hmd_Eye eye) {
 
-    //Mat leftEye = Mat::zeros(rgb.rows, rgb.cols, rgb.type());
-    //Mat rightEye = Mat::zeros(rgb.rows, rgb.cols, rgb.type());
-    Mat leftEye = rgb.clone();
-    Mat rightEye = rgb.clone();
+    Mat rgb = _rgb.getMat();
+    _out.create(rgb.size(), rgb.type());
+    Mat out = _out.getMat();
+
+    rgb.copyTo(out);
+    circle(out, out.size()/2 , 50, {0,0,255},-1);
 
     // fill the holes in the disparity map -> inpainting too slow!! openvr refuses to launch the app
     //auto mask = (disparity == 255);
@@ -551,7 +553,6 @@ tuple<Mat, Mat> RGBD2VR::fakeStereo(Mat rgb, Mat disparity) {
     //mixChannels( in, 2, &anaglyph, 1, from_to, 2 );
     //imshow( "anaglyph", anaglyph );
     
-    return {leftEye, rightEye};
 }
 
 /**
@@ -572,11 +573,11 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
     Mat disparity = depth.clone();
     depth.convertTo( disparity, CV_8UC1, 1./32 ); // in default conf, 32 unit = 1 px of disparity. cf https://github.com/IntelRealSense/librealsense/blob/v1.12.1/doc/projection.md#depth-image-formats
 
-    Mat leftEye, rightEye;
-    tie(leftEye, rightEye) = fakeStereo(rgb, disparity);
+    Mat leftEye;
+    fakeStereo(rgb, disparity, leftEye, vr::Eye_Left);
+
 
     // left
-
     glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
     glTexImage2D(GL_TEXTURE_2D,     // Type of texture
                     0,                 // Pyramid level (for mip-mapping) - 0 is the top level
@@ -586,7 +587,7 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
                     0,                 // Border width in pixels (can either be 1 or 0)
                     GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
                     GL_UNSIGNED_BYTE,  // Image data type
-                    leftEye.ptr());        // The actual image data itself
+                    rgb.ptr());        // The actual image data itself
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -594,18 +595,18 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
 
 
     // right
-    //glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
-    //glTexImage2D(GL_TEXTURE_2D,     // Type of texture
-    //                0,                 // Pyramid level (for mip-mapping) - 0 is the top level
-    //                GL_RGB,            // Internal colour format to convert to
-    //                m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
-    //                m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
-    //                0,                 // Border width in pixels (can either be 1 or 0)
-    //                GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
-    //                GL_UNSIGNED_BYTE,  // Image data type
-    //                rightEye.ptr());        // The actual image data itself
-    //glGenerateMipmap(GL_TEXTURE_2D);
-    //glBindTexture( GL_TEXTURE_2D, 0 );
+    glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
+    glTexImage2D(GL_TEXTURE_2D,     // Type of texture
+                    0,                 // Pyramid level (for mip-mapping) - 0 is the top level
+                    GL_RGB,            // Internal colour format to convert to
+                    m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
+                    m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
+                    0,                 // Border width in pixels (can either be 1 or 0)
+                    GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
+                    GL_UNSIGNED_BYTE,  // Image data type
+                    rgb.ptr());        // The actual image data itself
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -1313,8 +1314,8 @@ void RGBD2VR::RenderBackground(vr::Hmd_Eye nEye ) {
         glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
     }
     else {
-        glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
-        //glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
+        //glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
+        glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
     }
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
