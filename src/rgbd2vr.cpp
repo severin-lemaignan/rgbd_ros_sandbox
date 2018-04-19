@@ -594,18 +594,18 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
 
 
     // right
-    glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
-    glTexImage2D(GL_TEXTURE_2D,     // Type of texture
-                    0,                 // Pyramid level (for mip-mapping) - 0 is the top level
-                    GL_RGB,            // Internal colour format to convert to
-                    m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
-                    m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
-                    0,                 // Border width in pixels (can either be 1 or 0)
-                    GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
-                    GL_UNSIGNED_BYTE,  // Image data type
-                    rightEye.ptr());        // The actual image data itself
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture( GL_TEXTURE_2D, 0 );
+    //glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
+    //glTexImage2D(GL_TEXTURE_2D,     // Type of texture
+    //                0,                 // Pyramid level (for mip-mapping) - 0 is the top level
+    //                GL_RGB,            // Internal colour format to convert to
+    //                m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
+    //                m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
+    //                0,                 // Border width in pixels (can either be 1 or 0)
+    //                GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
+    //                GL_UNSIGNED_BYTE,  // Image data type
+    //                rightEye.ptr());        // The actual image data itself
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    //glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -1305,7 +1305,8 @@ void RGBD2VR::RenderBackground(vr::Hmd_Eye nEye ) {
         glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
     }
     else {
-        glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
+        glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
+        //glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
     }
 
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );

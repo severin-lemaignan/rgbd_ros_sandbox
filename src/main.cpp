@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    ROS_INFO("VR rendered successfully initialized! Starting to stream...");
+    ROS_INFO("rgbd2vr is ready. Waiting for pair of {rgb, depth} images to stream to the VR headset!");
     ros::Rate r(30); // Hz
 
     vrRenderer->start();
@@ -107,8 +107,6 @@ int main(int argc, char* argv[])
     vrRenderer->shutdown();
 
 
-    ROS_INFO("rgbd2vr is ready. Waiting for pair of {rgb, depth} images!");
-    ros::spin();
 
     return 0;
 }
