@@ -296,10 +296,10 @@ bool RGBD2VR::BInitGL()
     if( !CreateAllShaders() )
         return false;
 
+    SetupStereoRenderTargets();
     initializeTextures();
     SetupScene();
     SetupCameras();
-	SetupStereoRenderTargets();
     SetupRenderModels();
 
     return true;
@@ -896,18 +896,17 @@ bool RGBD2VR::CreateAllShaders()
 bool RGBD2VR::initializeTextures()
 {
 
-    Mat defaultImage(m_nRenderWidth, m_nRenderHeight, CV_8UC3, Scalar(128,128,0));
+    Mat defaultLImage(m_nRenderHeight, m_nRenderWidth, CV_8UC3, Scalar(128,128,0));
+    putText(defaultLImage, "Waiting stream... (left eye)", {10, defaultLImage.rows/2}, cv::FONT_HERSHEY_SIMPLEX, 2, {0,0,0},2);
+    flip(defaultLImage, defaultLImage, 0);
+    Mat defaultRImage(m_nRenderHeight, m_nRenderWidth, CV_8UC3, Scalar(128,128,0));
+    putText(defaultRImage, "Waiting stream... (right eye)", {10, defaultRImage.rows/2}, cv::FONT_HERSHEY_SIMPLEX, 2, {0,0,0},2);
+    flip(defaultRImage, defaultRImage, 0);
 
 
     // left eye
     glGenTextures(1, &leftEyeVideoTexture );
     glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
-
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-
     glTexImage2D(GL_TEXTURE_2D,     // Type of texture
                     0,                 // Pyramid level (for mip-mapping) - 0 is the top level
                     GL_RGB,            // Internal colour format to convert to
@@ -916,7 +915,14 @@ bool RGBD2VR::initializeTextures()
                     0,                 // Border width in pixels (can either be 1 or 0)
                     GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
                     GL_UNSIGNED_BYTE,  // Image data type
-                    defaultImage.ptr());        // The actual image data itself
+                    defaultLImage.ptr());        // The actual image data itself
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
  
     GLfloat fLargest;
@@ -930,11 +936,6 @@ bool RGBD2VR::initializeTextures()
     glGenTextures(1, &rightEyeVideoTexture );
     glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
 
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-
     glTexImage2D(GL_TEXTURE_2D,     // Type of texture
                     0,                 // Pyramid level (for mip-mapping) - 0 is the top level
                     GL_RGB,            // Internal colour format to convert to
@@ -943,7 +944,14 @@ bool RGBD2VR::initializeTextures()
                     0,                 // Border width in pixels (can either be 1 or 0)
                     GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
                     GL_UNSIGNED_BYTE,  // Image data type
-                    defaultImage.ptr());        // The actual image data itself
+                    defaultRImage.ptr());        // The actual image data itself
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
 
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
