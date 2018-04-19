@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ros_opencv_sandbox)
+project(rgbd2vr)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -13,12 +13,33 @@ find_package(catkin REQUIRED COMPONENTS
         nodelet)
 
 ## System dependencies
-find_package(OpenCV REQUIRED)
-
+find_package(OpenGL REQUIRED)
+find_package(OpenCV 3 REQUIRED core imgproc)
 message(STATUS "OpenCV version: ${OpenCV_VERSION}")
-if(2.9.0 VERSION_GREATER ${OpenCV_VERSION})
-    message(FATAL "OpenCV3 required!")
-endif()
+find_package(GLEW 1.11 REQUIRED)
+find_package(SDL2 REQUIRED)
+
+
+##Hardcoded OpenVR Path please change
+set(OPENVR_PREFIX $ENV{DEV_PREFIX})
+
+## OpenVR API path
+find_library(OPENVR_LIBRARIES
+  NAMES
+    openvr_api
+  PATHS
+    ${OPENVR_PREFIX}/lib
+  PATH_SUFFIXES
+    osx32
+    linux64
+    ${WINDOWS_PATH_SUFFIXES}
+  NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
+)
+set(OPENVR_INCLUDE_DIRS ${OPENVR_PREFIX}/include)
+
+
+
 
 ###################################
 ## catkin specific configuration ##
@@ -43,17 +64,27 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include
+                    ${catkin_INCLUDE_DIRS}
+                    ${OPENGL_INCLUDE_DIRS}
+                    ${OpenCV_INCLUDE_DIRS}
+                    ${GLEW_INCLUDE_DIRS}
+                    ${SDL2_INCLUDE_DIRS}
+                    ${OPENVR_INCLUDE_DIRS})
 
 add_definitions(-std=c++11)
 
 set(LIBS 
     ${catkin_LIBRARIES}
+    ${OPENGL_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    ${GLEW_LIBRARIES}
+    ${SDL2_LIBRARIES}
+    ${OPENVR_LIBRARIES}
     )
 
 
-add_executable(run src/main.cpp)
+add_executable(run src/main.cpp src/rgbd2vr.cpp src/Matrices.cpp)
 target_link_libraries(run ${LIBS})
 
 #add_library(markers_nodelet src/chilitagsdetector.cpp src/nodelet.cpp)

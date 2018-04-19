@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>ros_opencv_sandbox</name>
+  <name>rgbd2vr</name>
   <version>0.1.0</version>
-  <description>ROS OpenCV sandbox</description>
+  <description>Reproject standard RGB-D stream to a VR headset using openVR</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
