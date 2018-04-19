@@ -1377,7 +1377,7 @@ void RGBD2VR::RenderScene( vr::Hmd_Eye nEye )
 
 	glDisable(GL_DEPTH_TEST);
 
-	RenderBackground( vr::Eye_Right );
+	RenderBackground( nEye );
 
 	glEnable(GL_DEPTH_TEST);
 
