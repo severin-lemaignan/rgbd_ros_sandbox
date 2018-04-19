@@ -76,12 +76,7 @@ int main(int argc, char* argv[])
     ros::NodeHandle rosNode;
     ros::NodeHandle _private_node("~");
 
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(rosNode, "rgb", 1);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(rosNode, "depth", 1);
-
-    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync(rgb_sub, depth_sub, 3);
-    sync.registerCallback(bind(&process, _1, _2 ) );
-
+    // initialize the VR renderer *before* starting to process frames
     vrRenderer = new RGBD2VR();
 
     if (!vrRenderer->BInit())
@@ -89,6 +84,15 @@ int main(int argc, char* argv[])
         vrRenderer->shutdown();
         return 1;
     }
+
+    // subscribe to disparity + rgb
+
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(rosNode, "rgb", 1);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(rosNode, "depth", 1);
+
+    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync(rgb_sub, depth_sub, 3);
+    sync.registerCallback(bind(&process, _1, _2 ) );
+
 
     ROS_INFO("rgbd2vr is ready. Waiting for pair of {rgb, depth} images to stream to the VR headset!");
     ros::Rate r(30); // Hz
