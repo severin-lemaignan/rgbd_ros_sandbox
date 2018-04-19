@@ -511,14 +511,12 @@ void RGBD2VR::ProcessVREvent( const vr::VREvent_t & event )
     }
 }
 
-void RGBD2VR::fakeStereo(InputArray _rgb, InputArray _disparity, OutputArray _out, vr::Hmd_Eye eye) {
+tuple<Mat, Mat> RGBD2VR::fakeStereo(Mat rgb, Mat disparity) {
 
-    Mat rgb = _rgb.getMat();
-    _out.create(rgb.size(), rgb.type());
-    Mat out = _out.getMat();
-
-    rgb.copyTo(out);
-    circle(out, out.size()/2 , 50, {0,0,255},-1);
+    //Mat leftEye = Mat::zeros(rgb.rows, rgb.cols, rgb.type());
+    //Mat rightEye = Mat::zeros(rgb.rows, rgb.cols, rgb.type());
+    Mat leftEye = rgb.clone();
+    Mat rightEye = rgb.clone();
 
     // fill the holes in the disparity map -> inpainting too slow!! openvr refuses to launch the app
     //auto mask = (disparity == 255);
@@ -527,23 +525,20 @@ void RGBD2VR::fakeStereo(InputArray _rgb, InputArray _disparity, OutputArray _ou
     //holeFilling.copyTo(disparity, mask);
     //blur(disparity, disparity, {5,5});
 
-    /*
-    for (int x = 0; x < rgb.cols; x++) {
-        for (int y = 0; y < rgb.rows; y++) {
-            auto d = disparity.at<uint8_t>(Point(x,y)) * baseline_scale;
-            if (d < 255) { // 255 is a sentinel value meaning no matching found
-                auto color = rgb.at<Vec3b>(Point(x,y));
-                if (x + d < rgb.cols) {
-                    leftEye.at<Vec3b>(Point(x + d, y)) = color;
-                }
-                if (x > d) {
-                    rightEye.at<Vec3b>(Point(x - d, y)) = color;
-                }
-            }
-        }
-    }
-    */
-
+//    for (int x = 0; x < rgb.cols; x++) {
+//        for (int y = 0; y < rgb.rows; y++) {
+//            auto d = disparity.at<uint8_t>(Point(x,y)) * baseline_scale;
+//            if (d < 255) { // 255 is a sentinel value meaning no matching found
+//                auto color = rgb.at<Vec3b>(Point(x,y));
+//                if (x + d < rgb.cols) {
+//                    leftEye.at<Vec3b>(Point(x + d, y)) = color;
+//                }
+//                if (x > d) {
+//                    rightEye.at<Vec3b>(Point(x - d, y)) = color;
+//                }
+//            }
+//        }
+//    }
     //imshow( "left eye", leftEye );
     //imshow( "right eye", rightEye );
 
@@ -553,6 +548,7 @@ void RGBD2VR::fakeStereo(InputArray _rgb, InputArray _disparity, OutputArray _ou
     //mixChannels( in, 2, &anaglyph, 1, from_to, 2 );
     //imshow( "anaglyph", anaglyph );
     
+    return {leftEye, rightEye};
 }
 
 /**
@@ -573,21 +569,21 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
     Mat disparity = depth.clone();
     depth.convertTo( disparity, CV_8UC1, 1./32 ); // in default conf, 32 unit = 1 px of disparity. cf https://github.com/IntelRealSense/librealsense/blob/v1.12.1/doc/projection.md#depth-image-formats
 
-    Mat leftEye;
-    fakeStereo(rgb, disparity, leftEye, vr::Eye_Left);
-
+    Mat leftEye, rightEye;
+    tie(leftEye, rightEye) = fakeStereo(rgb, disparity);
 
     // left
     glBindTexture( GL_TEXTURE_2D, leftEyeVideoTexture );
+
     glTexImage2D(GL_TEXTURE_2D,     // Type of texture
                     0,                 // Pyramid level (for mip-mapping) - 0 is the top level
                     GL_RGB,            // Internal colour format to convert to
-                    m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
-                    m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
+                    leftEye.cols,          // Image width  i.e. 640 for Kinect in standard mode
+                    leftEye.rows,          // Image height i.e. 480 for Kinect in standard mode
                     0,                 // Border width in pixels (can either be 1 or 0)
                     GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
                     GL_UNSIGNED_BYTE,  // Image data type
-                    rgb.ptr());        // The actual image data itself
+                    leftEye.ptr());        // The actual image data itself
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -596,17 +592,21 @@ void RGBD2VR::setNextBackgroundFrames(Mat raw_rgb, Mat raw_depth)
 
     // right
     glBindTexture( GL_TEXTURE_2D, rightEyeVideoTexture );
+
     glTexImage2D(GL_TEXTURE_2D,     // Type of texture
                     0,                 // Pyramid level (for mip-mapping) - 0 is the top level
                     GL_RGB,            // Internal colour format to convert to
-                    m_nRenderWidth,          // Image width  i.e. 640 for Kinect in standard mode
-                    m_nRenderHeight,          // Image height i.e. 480 for Kinect in standard mode
+                    rightEye.cols,          // Image width  i.e. 640 for Kinect in standard mode
+                    rightEye.rows,          // Image height i.e. 480 for Kinect in standard mode
                     0,                 // Border width in pixels (can either be 1 or 0)
                     GL_BGR, // Input image format (i.e. GL_RGB, GL_RGBA, GL_BGR etc.)
                     GL_UNSIGNED_BYTE,  // Image data type
-                    rgb.ptr());        // The actual image data itself
+                    rightEye.ptr());        // The actual image data itself
+
     glGenerateMipmap(GL_TEXTURE_2D);
+
     glBindTexture( GL_TEXTURE_2D, 0 );
+
 }
 
 //-----------------------------------------------------------------------------

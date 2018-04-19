@@ -114,7 +114,7 @@ class RGBD2VR
     private: // OpenCV stuff
         float baseline_scale;
         cv::Mat frame;
-        void fakeStereo(cv::InputArray rgb, cv::InputArray disparity, cv::OutputArray eye, vr::Hmd_Eye);
+        std::tuple<cv::Mat, cv::Mat> fakeStereo(cv::Mat rgb, cv::Mat disparity);
         cv::Mat resizeKeepAspectRatio(const cv::Mat &input, const cv::Size &dstSize);
 
     private: // OpenGL bookkeeping
